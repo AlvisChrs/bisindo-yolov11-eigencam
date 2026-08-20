@@ -1,0 +1,64 @@
+# ============================================================
+# configs/train_config.yaml
+# Hyperparameter training YOLOv11-nano — BISINDO A-Z
+# Semua nilai sesuai Tabel 3.3 proposal skripsi.
+#
+# Cara pakai:
+#   python -m src.training.train --config configs/train_config.yaml
+# ============================================================
+
+# ── Model ────────────────────────────────────────────────────
+model: yolo11n.pt          # YOLOv11-nano pretrained (ImageNet)
+
+# ── Dataset ──────────────────────────────────────────────────
+# Path ke data.yaml hasil download_dataset.py
+# Bisa di-override via CLI: --data datasets/bisindo-dataset-1/data.yaml
+data: datasets/bisindo-dataset-1/data.yaml
+
+# ── Output ───────────────────────────────────────────────────
+project: results           # folder induk hasil training
+name: bisindo_yolo11n      # nama run (hasil ada di results/bisindo_yolo11n/)
+exist_ok: false            # false = buat folder baru kalau sudah ada (pakai true untuk resume)
+
+# ── Epoch & batch ────────────────────────────────────────────
+epochs: 40
+batch: 16
+imgsz: 640
+
+# ── Optimizer ────────────────────────────────────────────────
+optimizer: AdamW
+lr0: 0.000333              # learning rate awal
+lrf: 0.01                  # faktor lr akhir (lr_final = lr0 * lrf)
+momentum: 0.937            # beta1 untuk AdamW
+weight_decay: 0.0005
+
+# ── Augmentasi ───────────────────────────────────────────────
+hsv_h: 0.015               # augmentasi hue
+hsv_s: 0.7                 # augmentasi saturation
+hsv_v: 0.4                 # augmentasi value/brightness
+degrees: 0.0               # rotasi (nonaktif — isyarat tangan sensitif orientasi)
+translate: 0.1
+scale: 0.5
+shear: 0.0
+flipud: 0.0                # flip vertikal nonaktif
+fliplr: 0.5                # flip horizontal aktif
+mosaic: 1.0
+mixup: 0.0
+
+# ── Inference / threshold ────────────────────────────────────
+conf: 0.5                  # confidence threshold saat predict & evaluate
+iou: 0.7                   # IoU threshold untuk NMS
+
+# ── Hardware ─────────────────────────────────────────────────
+device: ""                 # "" = otomatis pilih GPU jika ada, CPU jika tidak
+workers: 4                 # dataloader workers (turunkan ke 0 jika error di Windows)
+
+# ── Logging & checkpoint ─────────────────────────────────────
+save: true
+save_period: -1            # -1 = hanya simpan best.pt & last.pt (hemat disk)
+                           # Ganti ke 1 di Colab free tier supaya checkpoint
+                           # tersimpan tiap epoch — kalau disconnect di epoch 15,
+                           # hanya kehilangan progres epoch itu, bukan lebih.
+                           # Override via CLI: --save-period 1
+plots: true                # simpan grafik loss, mAP, confusion matrix
+verbose: true

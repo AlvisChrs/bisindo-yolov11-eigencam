@@ -1,0 +1,51 @@
+# ── Secrets & environment ──────────────────────────────────
+.env
+
+# ── Model weights ──────────────────────────────────────────
+*.pt
+*.pth
+*.onnx
+*.torchscript
+
+# ── Dataset (unduh ulang via download_dataset.py) ──────────
+datasets/
+data/
+*.zip
+*.tar.gz
+
+# ── Hasil training / output ────────────────────────────────
+runs/
+results/
+# Kecuali folder results/ memang ada, tapi isinya besar — abaikan isinya:
+!results/.gitkeep
+
+# ── Python cache ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# ── Jupyter checkpoints ────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Virtual environment ────────────────────────────────────
+.venv/
+venv/
+env/
+.conda/
+
+# ── File pribadi ──────────────────────────────────────────
+PROMPT_MIGRASI_AGENT.md
+
+# ── IDE & OS ───────────────────────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Build artifacts ────────────────────────────────────────
+dist/
+build/
+*.egg-info/

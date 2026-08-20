@@ -1,0 +1,38 @@
+# ============================================================
+# requirements.txt — BISINDO YOLOv11-nano + EigenCAM
+# Python 3.14.x
+# ============================================================
+#
+# CATATAN INSTALASI:
+#
+# [A] Lokal (Intel Arc / CPU only) — untuk development & sanity check:
+#     pip install -r requirements.txt
+#
+# [B] Google Colab / NVIDIA GPU — untuk training penuh 40 epoch:
+#     pip install -r requirements.txt
+#     pip install torch==2.13.0 torchvision==0.28.0 torchaudio==2.13.0 \
+#         --index-url https://download.pytorch.org/whl/cu126
+#     (jalankan SETELAH requirements.txt, akan override torch CPU)
+#
+# ============================================================
+
+# ── Deep learning framework (CPU build, override di Colab — lihat catatan B) ──
+torch==2.13.0
+torchvision==0.28.0
+# torchaudio tidak diperlukan untuk project computer vision ini
+
+# ── Computer vision & object detection ────────────────────────────────────────
+ultralytics==8.4.123
+opencv-python==4.11.0.86
+
+# ── Numerical computing ────────────────────────────────────────────────────────
+numpy==2.3.5
+
+# ── Visualisasi ────────────────────────────────────────────────────────────────
+matplotlib==3.11.1
+
+# ── Dataset download ───────────────────────────────────────────────────────────
+roboflow==1.4.1
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+python-dotenv==1.2.3
