@@ -164,10 +164,16 @@ def evaluate(
     inference_ms = 0.0
     if benchmark_speed:
         import time
-        # Warmup
-        _ = model.predict(source=str(data).replace("data.yaml", "test/images"), conf=conf, iou=iou, imgsz=imgsz, device=device, verbose=False)
-        # Benchmark pada 100 gambar pertama test set
+        # Tentukan folder test images via Path (robust di Windows & Linux)
         test_img_dir = Path(data).parent / "test" / "images"
+        # Warmup: jalankan sekali untuk inisialisasi CUDA / cache model
+        if test_img_dir.exists():
+            _ = model.predict(
+                source=str(test_img_dir),
+                conf=conf, iou=iou, imgsz=imgsz, device=device,
+                verbose=False, save=False,
+            )
+        # Benchmark pada 100 gambar pertama test set
         if test_img_dir.exists():
             test_images = list(test_img_dir.glob("*.jpg"))[:100]
             if test_images:
