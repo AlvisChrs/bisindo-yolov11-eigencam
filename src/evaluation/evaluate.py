@@ -61,6 +61,7 @@ def evaluate(
     device: str = "",
     output: str = "results/evaluation",
     config_path: str = "configs/train_config.yaml",
+    benchmark_speed: bool = True,
 ) -> dict:
     """
     Evaluasi model pada test/val set dan simpan metrik ke disk.
@@ -159,6 +160,24 @@ def evaluate(
     precision = float(box.mp)          if hasattr(box, "mp")        else 0.0
     recall    = float(box.mr)          if hasattr(box, "mr")        else 0.0
 
+    # ── Speed Benchmark (Inference Time) ──────────────────────────────
+    inference_ms = 0.0
+    if benchmark_speed:
+        import time
+        # Warmup
+        _ = model.predict(source=str(data).replace("data.yaml", "test/images"), conf=conf, iou=iou, imgsz=imgsz, device=device, verbose=False)
+        # Benchmark pada 100 gambar pertama test set
+        test_img_dir = Path(data).parent / "test" / "images"
+        if test_img_dir.exists():
+            test_images = list(test_img_dir.glob("*.jpg"))[:100]
+            if test_images:
+                start = time.perf_counter()
+                for img_path in test_images:
+                    _ = model.predict(source=str(img_path), conf=conf, iou=iou, imgsz=imgsz, device=device, verbose=False, save=False)
+                elapsed = time.perf_counter() - start
+                inference_ms = (elapsed / len(test_images)) * 1000  # ms per image
+                print(f"[INFO] Inference speed: {inference_ms:.2f} ms/img (avg over {len(test_images)} images)")
+
     # Per-class AP (AP@50 per huruf)
     class_names = val_results.names   # dict {idx: nama_kelas}
     per_class = {}
@@ -179,6 +198,7 @@ def evaluate(
         "map50_95":     round(map50_95, 4),
         "precision":    round(precision, 4),
         "recall":       round(recall, 4),
+        "inference_ms": round(inference_ms, 2),
         "per_class_ap": per_class,
     }
 
@@ -204,6 +224,7 @@ def evaluate(
         f.write(f"mAP@50-95  : {metrics['map50_95']:.4f}  ({metrics['map50_95']*100:.2f}%)\n")
         f.write(f"Precision  : {metrics['precision']:.4f}  ({metrics['precision']*100:.2f}%)\n")
         f.write(f"Recall     : {metrics['recall']:.4f}  ({metrics['recall']*100:.2f}%)\n")
+        f.write(f"Inferensi  : {metrics['inference_ms']:.2f} ms/img\n")
         f.write("-" * 50 + "\n")
         if per_class:
             f.write("Per-class AP@50:\n")
@@ -278,6 +299,11 @@ def main() -> None:
         default="configs/train_config.yaml",
         help="Path ke train_config.yaml (untuk fallback data path)",
     )
+    parser.add_argument(
+        "--no-benchmark-speed",
+        action="store_true",
+        help="Nonaktifkan benchmark kecepatan inferensi",
+    )
     args = parser.parse_args()
 
     evaluate(
@@ -290,6 +316,7 @@ def main() -> None:
         device=args.device,
         output=args.output,
         config_path=args.config,
+        benchmark_speed=not args.no_benchmark_speed,
     )
 
 

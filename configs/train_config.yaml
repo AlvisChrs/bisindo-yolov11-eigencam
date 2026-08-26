@@ -29,14 +29,14 @@ imgsz: 640
 optimizer: AdamW
 lr0: 0.000333              # learning rate awal
 lrf: 0.01                  # faktor lr akhir (lr_final = lr0 * lrf)
-momentum: 0.937            # beta1 untuk AdamW
+momentum: 0.9              # beta1 untuk AdamW (sesuai proposal: 0.9)
 weight_decay: 0.0005
 
 # ── Augmentasi ───────────────────────────────────────────────
 hsv_h: 0.015               # augmentasi hue
 hsv_s: 0.7                 # augmentasi saturation
 hsv_v: 0.4                 # augmentasi value/brightness
-degrees: 0.0               # rotasi (nonaktif — isyarat tangan sensitif orientasi)
+degrees: 0.0               # rotasi nonaktif — isyarat tangan sensitif orientasi
 translate: 0.1
 scale: 0.5
 shear: 0.0
@@ -44,6 +44,7 @@ flipud: 0.0                # flip vertikal nonaktif
 fliplr: 0.5                # flip horizontal aktif
 mosaic: 1.0
 mixup: 0.0
+erasing: 0.4               # Random Erasing 40% (sesuai proposal Bab 3.2)
 
 # ── Inference / threshold ────────────────────────────────────
 conf: 0.5                  # confidence threshold saat predict & evaluate
@@ -60,5 +61,6 @@ save_period: -1            # -1 = hanya simpan best.pt & last.pt (hemat disk)
                            # tersimpan tiap epoch — kalau disconnect di epoch 15,
                            # hanya kehilangan progres epoch itu, bukan lebih.
                            # Override via CLI: --save-period 1
+patience: 10               # Early stopping: hentikan jika mAP@50 tidak naik 10 epoch (sesuai proposal)
 plots: true                # simpan grafik loss, mAP, confusion matrix
 verbose: true
