@@ -223,6 +223,8 @@ def train(config_path: str = "configs/train_config.yaml", overrides: dict = None
             "fliplr":   cfg.get("fliplr", 0.5),
             "mosaic":   cfg.get("mosaic", 1.0),
             "mixup":    cfg.get("mixup", 0.0),
+            "erasing":  cfg.get("erasing", 0.4),   # Random Erasing (proposal Bab 3.2)
+            "patience": cfg.get("patience", 10),   # Early stopping: berhenti jika mAP@50 tidak naik N epoch
         }
 
         results = model.train(**train_args)
