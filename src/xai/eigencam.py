@@ -322,10 +322,15 @@ def eigencam(
     # PERBAIKAN #4 (mask_to_bbox parameter): bisa dimatikan via mask_to_bbox=False
     if mask_to_bbox and box is not None:
         orig_h, orig_w = img_rgb_orig.shape[:2]
-        x1 = int(box[0] * imgsz / orig_w)
-        y1 = int(box[1] * imgsz / orig_h)
-        x2 = int(box[2] * imgsz / orig_w)
-        y2 = int(box[3] * imgsz / orig_h)
+        # Hitung scale dan offset LetterBox yang benar:
+        # LetterBox memakai scale seragam (bukan stretch) + padding di satu sisi.
+        scale = min(imgsz / orig_h, imgsz / orig_w)
+        pad_x = (imgsz - orig_w * scale) / 2   # padding kiri
+        pad_y = (imgsz - orig_h * scale) / 2   # padding atas
+        x1 = int(box[0] * scale + pad_x)
+        y1 = int(box[1] * scale + pad_y)
+        x2 = int(box[2] * scale + pad_x)
+        y2 = int(box[3] * scale + pad_y)
         pad = 20
         mask = np.zeros((imgsz, imgsz), dtype=np.float32)
         mask[max(0, y1 - pad):min(imgsz, y2 + pad),
