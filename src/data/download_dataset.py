@@ -154,18 +154,29 @@ def download_dataset(
             )
             return str(dataset_subdir)
 
+    # Jika dataset_location SUDAH sama dengan dataset_subdir, tidak perlu pindah
+    if dataset_location.resolve() == dataset_subdir.resolve():
+        print(f"[OK] Dataset sudah di lokasi yang benar: {dataset_subdir}")
+        print(f"[OK] Dataset siap. data.yaml: {data_yaml}")
+        return str(dataset_subdir)
+
     # Jika dataset_location BUKAN dataset_subdir, pindahkan isinya ke dataset_subdir
-    if dataset_location.resolve() != dataset_subdir.resolve():
-        print(f"[INFO] Memindahkan dataset dari {dataset_location} ke {dataset_subdir}...")
-        import shutil
-        # Hapus dataset_subdir kosong kalau ada
-        if dataset_subdir.exists():
-            shutil.rmtree(dataset_subdir)
-        dataset_subdir.mkdir(parents=True, exist_ok=True)
-        # Pindahkan KONTEN folder hasil download ke dataset_subdir (bukan folder-nya)
-        for item in dataset_location.iterdir():
+    print(f"[INFO] Memindahkan dataset dari {dataset_location} ke {dataset_subdir}...")
+    import shutil
+    # Hapus dataset_subdir kosong kalau ada
+    if dataset_subdir.exists():
+        shutil.rmtree(dataset_subdir)
+    dataset_subdir.mkdir(parents=True, exist_ok=True)
+    # Pindahkan KONTEN folder hasil download ke dataset_subdir (bukan folder-nya)
+    for item in dataset_location.iterdir():
+        # Skip kalau item.name == "bisindo-dataset-1" (sudah di tempat yang benar)
+        if item.name == "bisindo-dataset-1":
+            # Pindahkan isi dari folder ini sebagai gantinya
+            for subitem in item.iterdir():
+                shutil.move(str(subitem), str(dataset_subdir / subitem.name))
+        else:
             shutil.move(str(item), str(dataset_subdir / item.name))
-        data_yaml = dataset_subdir / "data.yaml"
+    data_yaml = dataset_subdir / "data.yaml"
 
     print(f"[OK] Dataset siap. data.yaml: {data_yaml}")
     return str(dataset_subdir)
