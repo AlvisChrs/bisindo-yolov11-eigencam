@@ -98,6 +98,7 @@ def download_dataset(
     str
         Path absolut ke folder dataset yang sudah diunduh.
         Berisi sub-folder train/, valid/, test/ dan file data.yaml.
+        Selalu mengembalikan path ke subfolder `bisindo-dataset-1/`.
 
     Raises
     ------
@@ -108,25 +109,27 @@ def download_dataset(
     """
     api_key = _load_api_key()
 
-    # Tentukan path tujuan absolut
+    # Tentukan path tujuan absolut: selalu gunakan subfolder bisindo-dataset-1
     project_root = Path(__file__).resolve().parents[2]
     dest_path = (project_root / dest).resolve()
-    dest_path.mkdir(parents=True, exist_ok=True)
+    # Subfolder tetap untuk konsistensi (match configs/train_config.yaml)
+    dataset_subdir = dest_path / "bisindo-dataset-1"
+    dataset_subdir.mkdir(parents=True, exist_ok=True)
 
     print(f"[INFO] Menghubungi Roboflow... workspace={workspace}, project={project}, version={version}")
-    print(f"[INFO] Dataset akan disimpan di: {dest_path}")
+    print(f"[INFO] Dataset akan disimpan di: {dataset_subdir}")
 
-    # Cek apakah dataset sudah ada (ada data.yaml di dest_path)
-    existing = list(dest_path.rglob("data.yaml"))
-    if existing:
-        dataset_location = existing[0].parent
-        print(f"[INFO] Dataset sudah ada, skip download. data.yaml: {existing[0]}")
-        return str(dataset_location)
+    # Cek apakah dataset sudah ada di subfolder yang benar
+    existing_data_yaml = dataset_subdir / "data.yaml"
+    if existing_data_yaml.exists():
+        print(f"[INFO] Dataset sudah ada, skip download. data.yaml: {existing_data_yaml}")
+        return str(dataset_subdir)
 
     rf = Roboflow(api_key=api_key)
     rf_project = rf.workspace(workspace).project(project)
     rf_version = rf_project.version(version)
 
+    # Download ke folder parent (dest_path), SDK akan buat folder sendiri
     # overwrite=True supaya SDK tidak skip karena folder sudah ada
     dataset = rf_version.download(
         model_format="yolov11",
@@ -149,10 +152,23 @@ def download_dataset(
                 "Kemungkinan download gagal di tengah jalan. Coba jalankan ulang.",
                 file=sys.stderr,
             )
-            return str(dest_path)
+            return str(dataset_subdir)
+
+    # Jika dataset_location BUKAN dataset_subdir, pindahkan isinya ke dataset_subdir
+    if dataset_location.resolve() != dataset_subdir.resolve():
+        print(f"[INFO] Memindahkan dataset dari {dataset_location} ke {dataset_subdir}...")
+        import shutil
+        # Hapus dataset_subdir kosong kalau ada
+        if dataset_subdir.exists():
+            shutil.rmtree(dataset_subdir)
+        dataset_subdir.mkdir(parents=True, exist_ok=True)
+        # Pindahkan KONTEN folder hasil download ke dataset_subdir (bukan folder-nya)
+        for item in dataset_location.iterdir():
+            shutil.move(str(item), str(dataset_subdir / item.name))
+        data_yaml = dataset_subdir / "data.yaml"
 
     print(f"[OK] Dataset siap. data.yaml: {data_yaml}")
-    return str(dataset_location)
+    return str(dataset_subdir)
 
 
 def main() -> None:
