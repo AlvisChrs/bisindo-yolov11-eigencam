@@ -1,7 +1,7 @@
 """
 src/xai/eigencam.py
 ────────────────────
-Implementasi EigenCAM multi-scale untuk visualisasi XAI pada YOLOv11-nano.
+Implementasi EigenCAM multi-scale untuk visualisasi XAI pada YOLOv11 (n/s/m/l/x).
 
 Referensi metode
 ----------------
@@ -30,7 +30,13 @@ PERBAIKAN vs kode notebook lama
    yang identik dengan preprocessing training dan inference, sehingga
    koordinat fitur layer tetap presisi dan heatmap tidak terdistorsi.
 
-4. Dua versi output (raw_cam & visual_overlay) + parameter mask_to_bbox:
+4. Auto-deteksi layer FPN (P3, P4, P5):
+   Tidak lagi hardcode layer indices [16, 19, 22] untuk nano saja.
+   Sekarang otomatis mendeteksi 3 layer feature pyramid berdasarkan stride
+   output (≈8, 16, 32) — bekerja untuk YOLOv11n/s/m/l/x tanpa ubah kode.
+   Fallback ke [16, 19, 22] jika deteksi gagal.
+
+5. Dua versi output (raw_cam & visual_overlay) + parameter mask_to_bbox:
    - raw_cam       : heatmap mentah setelah normalisasi, SEBELUM post-processing
                      visual. Bisa dipakai sebagai bukti ilmiah bahwa hasilnya
                      bukan sekadar "dipoles".
@@ -75,7 +81,77 @@ import numpy as np
 import torch
 
 
-# Layer yang diambil aktivasinya (sesuai arsitektur YOLOv11-nano)
+# ─────────────────────────────────────────────────────────────
+# AUTO-DETECT FEATURE PYRAMID LAYERS (P3, P4, P5)
+# ─────────────────────────────────────────────────────────────
+
+def _detect_fpn_layers(model_inner, imgsz: int = 640, device: str = "") -> list[int]:
+    """
+    Deteksi otomatis 3 layer Feature Pyramid Network (P3, P4, P5) berdasarkan
+    stride output. Cocok untuk YOLOv11n/s/m/l/x tanpa hardcode index.
+
+    Strategi:
+    - Jalankan forward pass dummy sekali
+    - Catat output shape (H, W) tiap layer
+    - Pilih 3 layer dengan stride ≈ 8, 16, 32 (rasio 1:2:4)
+    - Urutkan dari stride terkecil (P3) ke terbesar (P5)
+
+    Returns:
+        list[int]: Index layer [P3_idx, P4_idx, P5_idx]
+    """
+    _device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
+    model_inner.to(_device)
+    model_inner.eval()
+
+    # Dummy input
+    dummy = torch.zeros(1, 3, imgsz, imgsz, device=_device)
+
+    # Hook untuk capture output shape tiap layer
+    layer_shapes = {}
+
+    def _make_hook(idx):
+        def _hook(module, inp, output):
+            feat = output[0] if isinstance(output, tuple) else output
+            # feat shape: (1, C, H, W)
+            layer_shapes[idx] = feat.shape[-2:]  # (H, W)
+        return _hook
+
+    handles = []
+    for idx, module in enumerate(model_inner.model):
+        handles.append(module.register_forward_hook(_make_hook(idx)))
+
+    with torch.no_grad():
+        _ = model_inner(dummy)
+
+    for h in handles:
+        h.remove()
+
+    # Hitung stride tiap layer (imgsz / H)
+    strides = {}
+    for idx, (h, w) in layer_shapes.items():
+        if h > 0 and w > 0:
+            strides[idx] = imgsz / h  # asumsi square-ish
+
+    # Target strides untuk P3, P4, P5
+    target_strides = [8, 16, 32]
+    selected = []
+
+    for target in target_strides:
+        # Cari layer dengan stride paling mendekati target
+        best_idx = min(strides.keys(), key=lambda i: abs(strides[i] - target))
+        selected.append(best_idx)
+
+    # Urutkan by stride (P3→P4→P5)
+    selected.sort(key=lambda i: strides[i])
+
+    # Fallback ke default nano kalau deteksi gagal (kurang dari 3 layer valid)
+    if len(selected) < 3:
+        return [16, 19, 22]
+
+    return selected
+
+
+# Layer default untuk YOLOv11-nano (fallback jika auto-deteksi gagal)
 # Layer 16, 19, 22 adalah feature pyramid levels dengan resolusi berbeda —
 # multi-scale untuk menangkap fitur kasar (posisi tangan) dan halus (jari)
 DEFAULT_LAYERS: list[int] = [16, 19, 22]
@@ -192,7 +268,9 @@ def eigencam(
     img_path : str
         Path ke file gambar input.
     layers : list[int], optional
-        Index layer yang digunakan untuk multi-scale. Default: [16, 19, 22].
+        Index layer yang digunakan untuk multi-scale.
+        Default: **auto-deteksi** (mencari layer FPN P3, P4, P5 berdasarkan stride).
+        Fallback ke [16, 19, 22] untuk YOLOv11-nano jika deteksi gagal.
     n_components : int, optional
         Jumlah principal component SVD yang dijumlahkan. Default: 3.
 
@@ -239,7 +317,8 @@ def eigencam(
             Gambar RGB asli (sebelum letterbox), uint8, untuk keperluan plot.
     """
     if layers is None:
-        layers = DEFAULT_LAYERS
+        # Auto-deteksi layer FPN (P3, P4, P5) berdasarkan model yang dipakai
+        layers = _detect_fpn_layers(model.model, imgsz=imgsz, device=device)
 
     # ── 1. Baca gambar ─────────────────────────────────────────
     img_bgr = cv2.imread(str(img_path))
