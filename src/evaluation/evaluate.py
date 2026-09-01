@@ -169,13 +169,15 @@ def evaluate(
 
         # Tentukan folder test images via Path (robust di Windows & Linux)
         test_img_dir = Path(data).parent / "test" / "images"
-        # Warmup: jalankan sekali untuk inisialisasi CUDA / cache model
+        # Warmup: jalankan 1 gambar saja untuk inisialisasi CUDA / cache model
         if test_img_dir.exists():
-            _ = model.predict(
-                source=str(test_img_dir),
-                conf=conf, iou=iou, imgsz=imgsz, device=device,
-                verbose=False, save=False,
-            )
+            warmup_images = [p for p in test_img_dir.iterdir() if p.suffix.lower() in IMG_EXTENSIONS]
+            if warmup_images:
+                _ = model.predict(
+                    source=str(warmup_images[0]),  # Hanya 1 gambar, bukan seluruh folder
+                    conf=conf, iou=iou, imgsz=imgsz, device=device,
+                    verbose=False, save=False,
+                )
         # Benchmark pada 100 gambar pertama test set
         if test_img_dir.exists():
             test_images = [p for p in test_img_dir.iterdir() if p.suffix.lower() in IMG_EXTENSIONS][:100]
