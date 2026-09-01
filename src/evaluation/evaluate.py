@@ -164,6 +164,9 @@ def evaluate(
     inference_ms = 0.0
     if benchmark_speed:
         import time
+        # Format gambar yang didukung (sama dengan predict.py)
+        IMG_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"}
+
         # Tentukan folder test images via Path (robust di Windows & Linux)
         test_img_dir = Path(data).parent / "test" / "images"
         # Warmup: jalankan sekali untuk inisialisasi CUDA / cache model
@@ -175,7 +178,7 @@ def evaluate(
             )
         # Benchmark pada 100 gambar pertama test set
         if test_img_dir.exists():
-            test_images = list(test_img_dir.glob("*.jpg"))[:100]
+            test_images = [p for p in test_img_dir.iterdir() if p.suffix.lower() in IMG_EXTENSIONS][:100]
             if test_images:
                 start = time.perf_counter()
                 for img_path in test_images:
