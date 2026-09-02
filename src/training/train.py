@@ -198,7 +198,7 @@ def train(config_path: str = "configs/train_config.yaml", overrides: dict = None
             "optimizer":    cfg["optimizer"],
             "lr0":          cfg["lr0"],
             "lrf":          cfg.get("lrf", 0.01),
-            "momentum":     cfg.get("momentum", 0.937),
+            "momentum":     cfg.get("momentum", 0.9),
             "weight_decay": cfg.get("weight_decay", 0.0005),
             "conf":         cfg["conf"],
             "iou":          cfg["iou"],
