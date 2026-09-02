@@ -163,8 +163,16 @@ def download_dataset(
     # Jika dataset_location BUKAN dataset_subdir, pindahkan isinya ke dataset_subdir
     print(f"[INFO] Memindahkan dataset dari {dataset_location} ke {dataset_subdir}...")
     import shutil
-    # Hapus dataset_subdir kosong kalau ada
+    # Hapus dataset_subdir kosong kalau ada TAPI hanya jika folder KOSONG atau HANYA berisi data.yaml yang rusak
     if dataset_subdir.exists():
+        # Cek isi folder sebelum hapus - jangan hapus kalau sudah lengkap
+        contents = list(dataset_subdir.iterdir())
+        has_data_yaml = (dataset_subdir / "data.yaml").exists()
+        has_images = any(p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"} for p in dataset_subdir.rglob("*") if p.is_file())
+        if has_data_yaml and has_images:
+            print(f"[INFO] Dataset sudah lengkap di {dataset_subdir}, skip pindah.")
+            return str(dataset_subdir)
+        # Kalau tidak lengkap, hapus dulu
         shutil.rmtree(dataset_subdir)
     dataset_subdir.mkdir(parents=True, exist_ok=True)
     # Pindahkan KONTEN folder hasil download ke dataset_subdir (bukan folder-nya)
