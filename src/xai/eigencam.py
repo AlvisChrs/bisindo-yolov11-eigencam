@@ -79,6 +79,7 @@ from typing import Optional
 import cv2
 import numpy as np
 import torch
+from ultralytics.data.augment import LetterBox
 
 
 # ─────────────────────────────────────────────────────────────
@@ -222,8 +223,6 @@ def _preprocess_image(img_bgr: np.ndarray, imgsz: int = 640) -> tuple[torch.Tens
         - input_tensor : tensor shape (1, 3, imgsz, imgsz), float32, nilai [0,1]
         - img_letterbox: gambar RGB setelah LetterBox (untuk overlay heatmap)
     """
-    from ultralytics.data.augment import LetterBox
-
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
     # LetterBox: resize + pad tanpa distorsi
