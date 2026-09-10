@@ -57,14 +57,16 @@ def _load_api_key() -> str:
 
     api_key = os.environ.get("ROBOFLOW_API_KEY", "").strip()
 
-    if not api_key:
+    _PLACEHOLDER = {"your_key_here", "your_api_key_here", ""}
+    if not api_key or api_key.lower() in _PLACEHOLDER:
         print(
-            "\n[ERROR] ROBOFLOW_API_KEY tidak ditemukan.\n"
+            "\n[ERROR] ROBOFLOW_API_KEY belum diisi atau masih berupa placeholder.\n"
             "\nLangkah perbaikan:\n"
-            f"  1. Salin .env.example menjadi .env di folder: {project_root}\n"
-            "  2. Buka https://app.roboflow.com → Settings → API Keys\n"
-            "  3. Tempel API key kamu ke dalam .env:\n"
-            "         ROBOFLOW_API_KEY=your_key_here\n",
+            f"  1. Buka https://app.roboflow.com\n"
+            "  2. Login > klik foto profil pojok kiri bawah > Settings > tab API Keys\n"
+            "  3. Copy API key kamu, lalu masukkan ke cell Step 4 notebook:\n"
+            "         ROBOFLOW_API_KEY = 'isi_api_key_kamu_di_sini'\n"
+            "  4. Jalankan ulang cell Step 4, lalu Step 5\n",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -125,17 +127,47 @@ def download_dataset(
         print(f"[INFO] Dataset sudah ada, skip download. data.yaml: {existing_data_yaml}")
         return str(dataset_subdir)
 
-    rf = Roboflow(api_key=api_key)
-    rf_project = rf.workspace(workspace).project(project)
-    rf_version = rf_project.version(version)
+    try:
+        rf = Roboflow(api_key=api_key)
+        rf_project = rf.workspace(workspace).project(project)
+        rf_version = rf_project.version(version)
+    except Exception as exc:
+        # Tangkap error autentikasi (401) dan error koneksi sebelum download
+        err_str = str(exc)
+        if "401" in err_str or "does not exist" in err_str or "revoked" in err_str:
+            print(
+                "\n[ERROR] API key Roboflow tidak valid atau sudah di-revoke (HTTP 401).\n"
+                "\nLangkah perbaikan:\n"
+                "  1. Buka https://app.roboflow.com\n"
+                "  2. Login > klik foto profil pojok kiri bawah > Settings > tab API Keys\n"
+                "  3. Buat key baru (klik 'Generate New Key') atau copy key yang ada\n"
+                "  4. Di notebook: isi ulang cell Step 4 dengan key yang benar, lalu\n"
+                "     jalankan Step 4 dulu, baru Step 5\n",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"\n[ERROR] Gagal menghubungi Roboflow: {exc}\n"
+                "Pastikan koneksi internet aktif dan coba lagi.",
+                file=sys.stderr,
+            )
+        sys.exit(1)
 
     # Download ke folder parent (dest_path), SDK akan buat folder sendiri
     # overwrite=True supaya SDK tidak skip karena folder sudah ada
-    dataset = rf_version.download(
-        model_format="yolov11",
-        location=str(dest_path),
-        overwrite=True,
-    )
+    try:
+        dataset = rf_version.download(
+            model_format="yolov11",
+            location=str(dest_path),
+            overwrite=True,
+        )
+    except Exception as exc:
+        print(
+            f"\n[ERROR] Download dataset gagal: {exc}\n"
+            "Coba jalankan ulang cell ini. Jika masih gagal, cek kuota Roboflow akun kamu.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # Cari data.yaml — SDK kadang menaruhnya di subfolder, kadang langsung di dest_path
     dataset_location = Path(dataset.location).resolve()
