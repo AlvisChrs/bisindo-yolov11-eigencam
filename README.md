@@ -20,7 +20,8 @@ bisindo-yolov11-eigencam/
 │   └── train_config.yaml      # semua hyperparameter training
 ├── src/
 │   ├── data/
-│   │   └── download_dataset.py   # unduh dataset dari Roboflow
+│   │   ├── download_dataset.py        # unduh dataset dari Roboflow
+│   │   └── visualize_augmentation.py  # preview grid augmentasi (laporan skripsi)
 │   ├── training/
 │   │   └── train.py              # training YOLOv11-nano (satu run utuh)
 │   ├── evaluation/
@@ -89,6 +90,30 @@ cp .env.example .env
 python -m src.data.download_dataset
 # Dataset tersimpan di: datasets/bisindo-dataset-1/
 ```
+
+### Visualisasi Augmentasi
+
+Membuat grid 2×3 (5 panel) yang menampilkan teknik augmentasi data yang digunakan saat training,
+lengkap dengan parameter yang sama persis seperti `configs/train_config.yaml`.
+Hasil disimpan di `results/figures/augmentation_preview.png` (DPI 220, siap laporan skripsi).
+
+```bash
+# Default: gambar pertama di train/images/, seed 42
+python -m src.data.visualize_augmentation
+
+# Pilih gambar sampel lain (indeks ke-100) dan seed berbeda
+python -m src.data.visualize_augmentation --sample-idx 100 --seed 7
+```
+
+**Panel yang dihasilkan:**
+
+| Panel | Teknik | Parameter |
+|-------|--------|-----------|
+| 1 | Original + Bounding Box | — |
+| 2 | Horizontal Flip | `fliplr = 0.5` |
+| 3 | HSV Augmentation | `hsv_h=0.015, hsv_s=0.7, hsv_v=0.4` |
+| 4 | Mosaic (4 gambar) | `mosaic = 1.0` |
+| 5 | Random Erasing | `erasing = 0.4` |
 
 ### Training
 
@@ -231,3 +256,11 @@ Lisensi kode di repositori ini: **MIT** — lihat file `LICENSE`.
 - Redmon, J., et al. (2016). You Only Look Once: Unified, Real-Time Object Detection. *CVPR 2016*.
 - Muhammad, M. B., & Yeasin, M. (2020). Eigen-CAM: Class Activation Map using Principal Components. *IJCNN 2020*. https://doi.org/10.1109/IJCNN48605.2020.9206626
 - Ultralytics. (2024). YOLO11. https://github.com/ultralytics/ultralytics
+
+---
+
+## Kontributor
+
+| Nama | NIM | Peran |
+|------|-----|-------|
+| Alvis Marcell Christian | L0123016 | Peneliti utama / pengembang |
