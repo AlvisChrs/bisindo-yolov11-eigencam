@@ -3,7 +3,7 @@ src/data/download_dataset.py
 ────────────────────────────
 Mengunduh dataset BISINDO A-Z dari Roboflow Universe.
 
-Dataset : bisindo/bisindo-dataset versi 1
+Dataset : visworkspace/bisindo-dataset-qhuhf versi 2 (RGB, tanpa grayscale)
 Lisensi : CC BY 4.0 — https://universe.roboflow.com/bisindo/bisindo-dataset
 Format  : yolov11
 
@@ -75,9 +75,9 @@ def _load_api_key() -> str:
 
 
 def download_dataset(
-    workspace: str = "bisindo",
-    project: str = "bisindo-dataset",
-    version: int = 1,
+    workspace: str = "visworkspace",
+    project: str = "bisindo-dataset-qhuhf",
+    version: int = 2,
     dest: str = "datasets",
 ) -> str:
     """
@@ -230,18 +230,18 @@ def main() -> None:
     )
     parser.add_argument(
         "--workspace",
-        default="bisindo",
+        default="visworkspace",
         help="Nama workspace Roboflow",
     )
     parser.add_argument(
         "--project",
-        default="bisindo-dataset",
+        default="bisindo-dataset-qhuhf",
         help="Nama project Roboflow",
     )
     parser.add_argument(
         "--version",
         type=int,
-        default=1,
+        default=2,
         help="Nomor versi dataset",
     )
     parser.add_argument(
