@@ -397,6 +397,26 @@ def eigencam(
         cam_final = (cam_final - c_min) / (c_max - c_min)
 
     # ── 6. Masking bounding box (opsional) ────────────────────
+    # ── HITUNG METRIK EBPG (Energy-Based Pointing Game) ──────
+    ebpg_score = 0.0
+    if box is not None:
+        orig_h, orig_w = img_rgb_orig.shape[:2]
+        scale = min(imgsz / orig_h, imgsz / orig_w)
+        pad_x = (imgsz - orig_w * scale) / 2
+        pad_y = (imgsz - orig_h * scale) / 2
+        
+        # Bounding box di skala 640x640
+        bx1 = int(max(0, box[0] * scale + pad_x))
+        by1 = int(max(0, box[1] * scale + pad_y))
+        bx2 = int(min(imgsz, box[2] * scale + pad_x))
+        by2 = int(min(imgsz, box[3] * scale + pad_y))
+        
+        energy_bbox = cam_final[by1:by2, bx1:bx2].sum()
+        energy_total = cam_final.sum()
+        
+        if energy_total > 1e-8:
+            ebpg_score = float(energy_bbox / energy_total)
+
     # PERBAIKAN #4 (mask_to_bbox parameter): bisa dimatikan via mask_to_bbox=False
     if mask_to_bbox and box is not None:
         orig_h, orig_w = img_rgb_orig.shape[:2]
@@ -462,6 +482,7 @@ def eigencam(
         "confidence":     round(conf_val, 4),
         "box_xyxy":       box,
         "img_original":   img_rgb_orig,
+        "ebpg":           round(ebpg_score, 4),
     }
 
 
@@ -498,6 +519,7 @@ def save_eigencam_figure(
     label    = result["label"]
     conf_val = result["confidence"]
     box      = result["box_xyxy"]
+    ebpg     = result.get("ebpg", 0.0)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
@@ -526,7 +548,7 @@ def save_eigencam_figure(
 
     axes[1].imshow(overlay)
     axes[1].set_title(
-        f"EigenCAM Heatmap — Huruf '{label}'\n"
+        f"EigenCAM Heatmap — Huruf '{label}' (EBPG: {ebpg:.4f})\n"
         f"{comp_note}, {mask_note}\n"
         f"Merah-Kuning = fokus tinggi | Biru = fokus rendah",
         fontsize=11,
