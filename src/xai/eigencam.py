@@ -630,6 +630,8 @@ def run_batch(
         Simpan juga raw_cam sebagai file .npy. Default: False.
     """
     from ultralytics import YOLO
+    import json
+    from collections import defaultdict
 
     weights_path = Path(weights)
     if not weights_path.exists():
@@ -651,6 +653,8 @@ def run_batch(
     print(f"[INFO] mask_to_bbox  : {mask_to_bbox}")
     print(f"[INFO] Output        : {output_dir.resolve()}")
     print()
+
+    ebpg_records = defaultdict(list)
 
     for i, img_path in enumerate(images, start=1):
         try:
@@ -674,16 +678,44 @@ def run_batch(
                 raw_path = output_dir / f"{stem}_raw_cam.npy"
                 np.save(str(raw_path), result["raw_cam"])
 
+            ebpg_val = result.get("ebpg", 0.0)
+            ebpg_records[result["label"]].append(ebpg_val)
+
             print(
                 f"  [{i:>4}/{len(images)}] {img_path.name:<30} "
-                f"→ {result['label']} ({result['confidence']:.2f})"
+                f"→ {result['label']} ({result['confidence']:.2f}) "
+                f"[EBPG: {ebpg_val:.4f}]"
                 f"{'  [saved raw]' if save_raw else ''}"
             )
 
         except Exception as e:
             print(f"  [{i:>4}/{len(images)}] {img_path.name:<30} → [ERROR] {e}", file=sys.stderr)
 
-    print(f"\n[DONE] EigenCAM selesai. Hasil di: {output_dir.resolve()}")
+    if ebpg_records:
+        summary = {}
+        print("\n[INFO] --- Ringkasan EBPG per Kelas ---")
+        print(f"{'Kelas':<10} | {'Rata-rata EBPG':<15} | {'Std Dev':<10} | {'Jumlah (n)'}")
+        print("-" * 55)
+        for label, scores in sorted(ebpg_records.items()):
+            n = len(scores)
+            mean_score = float(np.mean(scores))
+            std_score = float(np.std(scores))
+            summary[label] = {"mean": mean_score, "std": std_score, "n": n}
+            print(f"{label:<10} | {mean_score:<15.4f} | {std_score:<10.4f} | {n}")
+        
+        all_scores = [s for scores in ebpg_records.values() for s in scores]
+        mean_all = float(np.mean(all_scores))
+        std_all = float(np.std(all_scores))
+        summary["TOTAL_AVERAGE"] = {"mean": mean_all, "std": std_all, "n": len(all_scores)}
+        print("-" * 55)
+        print(f"{'TOTAL':<10} | {mean_all:<15.4f} | {std_all:<10.4f} | {len(all_scores)}")
+        
+        summary_path = output_dir / "ebpg_summary.json"
+        with open(summary_path, "w", encoding="utf-8") as f:
+            json.dump(summary, f, indent=4)
+        print(f"[OK] Ringkasan EBPG disimpan ke: {summary_path.resolve()}")
+
+    print(f"\n[DONE] EigenCAM selesai. Hasil gambar di: {output_dir.resolve()}")
 
 
 def main() -> None:
