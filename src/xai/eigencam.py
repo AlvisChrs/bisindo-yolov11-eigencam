@@ -225,8 +225,8 @@ def _preprocess_image(img_bgr: np.ndarray, imgsz: int = 640) -> tuple[torch.Tens
     """
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
-    # LetterBox: resize + pad tanpa distorsi
-    lb = LetterBox(new_shape=(imgsz, imgsz), auto=False)
+    # LetterBox: resize + pad tanpa distorsi (warna hitam untuk konsistensi training)
+    lb = LetterBox(new_shape=(imgsz, imgsz), auto=False, padding_value=0)
     img_lb = lb(image=img_rgb)   # (H, W, 3) RGB uint8
 
     # Konversi ke tensor (1, 3, H, W) float32 [0, 1]
