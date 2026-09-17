@@ -8,7 +8,7 @@
 # ============================================================
 
 # ── Model ────────────────────────────────────────────────────
-model: yolo11n.pt          # YOLOv11-nano pretrained (ImageNet)
+model: yolo11n.pt          # YOLOv11-nano pretrained (COCO)
 
 # ── Dataset ──────────────────────────────────────────────────
 # Path ke data.yaml hasil download_dataset.py

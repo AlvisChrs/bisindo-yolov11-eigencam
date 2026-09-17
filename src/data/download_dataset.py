@@ -13,7 +13,7 @@ Penggunaan
     python -m src.data.download_dataset
 
     # Dengan argumen opsional:
-    python -m src.data.download_dataset --workspace bisindo --project bisindo-dataset --version 1 --dest datasets/
+    python -m src.data.download_dataset --workspace visworkspace --project bisindo-dataset-qhuhf --version 3 --dest datasets/
 
     # Dari kode Python lain:
     from src.data.download_dataset import download_dataset
