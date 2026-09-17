@@ -1,6 +1,6 @@
 # ============================================================
 # requirements.txt — BISINDO YOLOv11-nano + EigenCAM
-# Python 3.14.x
+# Python 3.10 (sesuai Google Colab)
 # ============================================================
 #
 # CATATAN INSTALASI:
