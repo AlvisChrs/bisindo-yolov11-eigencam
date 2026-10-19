@@ -7,10 +7,10 @@ Bagian ini menguraikan konsep-konsep dasar yang melandasi penelitian.
 BISINDO adalah bahasa isyarat alami yang berkembang di kalangan komunitas Tuli Indonesia.
 
 === Arsitektur YOLOv11-nano
-YOLOv11 memperkenalkan peningkatan efisiensi ekstraksi fitur melalui modul C3k2 dan SPPF.
+YOLOv11 memperkenalkan peningkatan efisiensi ekstraksi fitur melalui modul C3k2 dan SPPF @wang2024yolov11.
 
 === Explainable Artificial Intelligence (Eigen-CAM)
-Eigen-CAM memanfaatkan *Principal Component Analysis* (PCA) atau *Singular Value Decomposition* (SVD) pada matriks aktivasi konvolusi:
+Eigen-CAM memanfaatkan *Principal Component Analysis* (PCA) atau *Singular Value Decomposition* (SVD) pada matriks aktivasi konvolusi @muhammad2020eigencam:
 
 $ A = U Sigma V^T $
 

@@ -36,3 +36,6 @@
 #include "chapters/bab4.typ"
 #include "chapters/bab5.typ"
 
+#bibliography("pustaka.bib", title: "DAFTAR PUSTAKA", style: "ieee")
+
+
