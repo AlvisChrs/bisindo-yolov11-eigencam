@@ -52,3 +52,8 @@ build/
 *.egg-info/
 *.pdf
 *.docx
+# ── Naskah Skripsi & Proposal (Local Only - Tidak Diunggah ke GitHub) ──
+skripsi/
+skripsi_local_backup/
+*.typ
+*.bib
