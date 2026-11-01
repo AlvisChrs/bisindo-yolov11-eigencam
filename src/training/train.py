@@ -200,7 +200,11 @@ def train(config_path: str = "configs/train_config.yaml", overrides: dict = None
             "lrf":          cfg.get("lrf", 0.01),
             "momentum":     cfg.get("momentum", 0.9),
             "weight_decay": cfg.get("weight_decay", 0.0005),
-            "conf":         cfg["conf"],
+            # "conf" sengaja TIDAK dikirim ke model.train() agar Ultralytics
+            # memakai default (null → 0.001) saat menghitung kurva PR dan mAP.
+            # Mengirim conf=0.5 ke training/val akan memotong kurva PR dan
+            # membuat mAP terukur lebih rendah dari nilai sebenarnya.
+            # conf operasional (0.5) hanya dipakai di predict.py dan eigencam.py.
             "iou":          cfg["iou"],
             "device":       cfg.get("device", ""),
             "workers":      cfg.get("workers", 4),

@@ -47,7 +47,15 @@ mixup: 0.0
 erasing: 0.4               # Random Erasing 40% (sesuai proposal Bab 3.2)
 
 # ── Inference / threshold ────────────────────────────────────
-conf: 0.5                  # confidence threshold saat predict & evaluate
+# PENTING — dua konteks berbeda, dua nilai berbeda:
+#
+# [1] Training & evaluasi mAP  → conf TIDAK di-set (biarkan Ultralytics default = null/0.001)
+#     Jika conf=0.5 dikirim ke model.train()/model.val(), kurva PR terpotong
+#     dan mAP terukur lebih rendah dari seharusnya.
+#     → conf sengaja TIDAK dimasukkan ke train_args di train.py
+#
+# [2] Inference operasional (predict, eigencam, demo) → pakai conf_operational
+conf_operational: 0.5      # confidence threshold untuk predict/demo saja
 iou: 0.7                   # IoU threshold untuk NMS
 
 # ── Hardware ─────────────────────────────────────────────────

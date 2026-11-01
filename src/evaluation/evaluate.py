@@ -55,7 +55,8 @@ def evaluate(
     weights: str,
     data: str = None,
     split: str = "test",
-    conf: float = 0.5,
+    conf: float = None,    # None = Ultralytics default (0.001) → kurva PR penuh → mAP akurat
+                           # Gunakan 0.5 hanya untuk demo/inference, BUKAN evaluasi mAP
     iou: float = 0.7,
     imgsz: int = 640,
     device: str = "",
@@ -280,8 +281,9 @@ def main() -> None:
     parser.add_argument(
         "--conf",
         type=float,
-        default=0.5,
-        help="Confidence threshold",
+        default=None,
+        help="Confidence threshold. Default None = Ultralytics default (0.001) untuk mAP akurat. "
+             "Gunakan 0.5 hanya untuk demo/inference, BUKAN evaluasi mAP resmi.",
     )
     parser.add_argument(
         "--iou",
