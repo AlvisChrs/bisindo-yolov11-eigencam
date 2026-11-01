@@ -44,7 +44,7 @@ bisindo-yolov11-eigencam/
 ### 1. Clone repo dan masuk ke folder
 
 ```bash
-git clone https://github.com/<username>/bisindo-yolov11-eigencam.git
+git clone https://github.com/AlvisChrs/bisindo-yolov11-eigencam.git
 cd bisindo-yolov11-eigencam
 ```
 
@@ -226,8 +226,7 @@ Semua hyperparameter ada di `configs/train_config.yaml`:
 
 ## Bobot Model
 
-File `.pt` tidak disimpan di repositori ini karena ukurannya besar.
-Bobot hasil training tersedia di: *(isi dengan link Google Drive atau GitHub Releases setelah training selesai)*
+File checkpoint bobot model (`best.pt`) disimpan terpisah di *cloud storage* / *GitHub Releases* dan dimuat saat pengujian inferensi atau evaluasi. Untuk mereproduksi pelatihan secara mandiri dari awal, ikuti petunjuk pada bagian **Training**.
 
 ---
 

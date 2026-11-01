@@ -57,3 +57,8 @@ skripsi/
 skripsi_local_backup/
 *.typ
 *.bib
+scratch/
+laporan_audit*
+
+
+revisi*.txt
