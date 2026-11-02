@@ -1,4 +1,4 @@
-"""
+﻿"""
 src/xai/eigencam.py
 ────────────────────
 Implementasi EigenCAM multi-scale untuk visualisasi XAI pada YOLOv11 (n/s/m/l/x).
@@ -253,7 +253,7 @@ def eigencam(
     imgsz: int = 640,
     device: str = "",
     mask_to_bbox: bool = True,
-    conf: float = 0.5,
+    conf: float = 0.25,
     iou: float = 0.7,
 ) -> dict:
     """
@@ -601,7 +601,7 @@ def run_batch(
     layers: list[int] = None,
     n_components: int = 3,
     mask_to_bbox: bool = True,
-    conf: float = 0.5,
+    conf: float = 0.25,
     iou: float = 0.7,
     imgsz: int = 640,
     device: str = "",
@@ -679,7 +679,8 @@ def run_batch(
                 np.save(str(raw_path), result["raw_cam"])
 
             ebpg_val = result.get("ebpg", 0.0)
-            ebpg_records[result["label"]].append(ebpg_val)
+            if result["label"] != "Tidak Terdeteksi" and result["box_xyxy"] is not None:
+                ebpg_records[result["label"]].append(ebpg_val)
 
             print(
                 f"  [{i:>4}/{len(images)}] {img_path.name:<30} "
@@ -737,7 +738,7 @@ def main() -> None:
                              "Gunakan 1 untuk EigenCAM baku (Muhammad & Yeasin 2020)")
     parser.add_argument("--no-mask-bbox", action="store_true",
                         help="Nonaktifkan masking bounding box (untuk lampiran pembanding)")
-    parser.add_argument("--conf",         type=float, default=0.5, help="Confidence threshold")
+    parser.add_argument("--conf",         type=float, default=0.25, help="Confidence threshold (default: 0.25 untuk deteksi)")
     parser.add_argument("--iou",          type=float, default=0.7, help="IoU threshold")
     parser.add_argument("--imgsz",        type=int, default=640, help="Ukuran gambar")
     parser.add_argument("--device",       default="", help="Device: '0', 'cpu', atau '' (auto)")
