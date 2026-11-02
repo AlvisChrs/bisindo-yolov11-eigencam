@@ -21,7 +21,7 @@ name: bisindo_yolo11n      # nama run (hasil ada di results/bisindo_yolo11n/)
 exist_ok: false            # false = buat folder baru kalau sudah ada (pakai true untuk resume)
 
 # ── Epoch & batch ────────────────────────────────────────────
-epochs: 40
+epochs: 100
 batch: 16
 imgsz: 640
 
@@ -69,6 +69,6 @@ save_period: -1            # -1 = hanya simpan best.pt & last.pt (hemat disk)
                            # tersimpan tiap epoch — kalau disconnect di epoch 15,
                            # hanya kehilangan progres epoch itu, bukan lebih.
                            # Override via CLI: --save-period 1
-patience: 10               # Early stopping: hentikan jika mAP@50 tidak naik 10 epoch (sesuai proposal)
+patience: 20               # Early stopping: toleransi 20 epoch untuk 100 epochs
 plots: true                # simpan grafik loss, mAP, confusion matrix
 verbose: true
