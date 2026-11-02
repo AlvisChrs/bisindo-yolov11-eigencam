@@ -1,4 +1,4 @@
-"""
+﻿"""
 src/evaluation/evaluate.py
 ──────────────────────────
 Evaluasi model YOLOv11-nano hasil training pada test set BISINDO A-Z.
@@ -168,6 +168,8 @@ def evaluate(
         # Format gambar yang didukung (sama dengan predict.py)
         IMG_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"}
 
+        pred_conf = conf if conf is not None else 0.25
+
         # Tentukan folder test images via Path (robust di Windows & Linux)
         test_img_dir = Path(data).parent / "test" / "images"
         # Warmup: jalankan 1 gambar saja untuk inisialisasi CUDA / cache model
@@ -176,7 +178,7 @@ def evaluate(
             if warmup_images:
                 _ = model.predict(
                     source=str(warmup_images[0]),  # Hanya 1 gambar, bukan seluruh folder
-                    conf=conf, iou=iou, imgsz=imgsz, device=device,
+                    conf=pred_conf, iou=iou, imgsz=imgsz, device=device,
                     verbose=False, save=False,
                 )
         # Benchmark pada 100 gambar pertama test set
@@ -185,7 +187,7 @@ def evaluate(
             if test_images:
                 start = time.perf_counter()
                 for img_path in test_images:
-                    _ = model.predict(source=str(img_path), conf=conf, iou=iou, imgsz=imgsz, device=device, verbose=False, save=False)
+                    _ = model.predict(source=str(img_path), conf=pred_conf, iou=iou, imgsz=imgsz, device=device, verbose=False, save=False)
                 elapsed = time.perf_counter() - start
                 inference_ms = (elapsed / len(test_images)) * 1000  # ms per image
                 print(f"[INFO] Inference speed: {inference_ms:.2f} ms/img (avg over {len(test_images)} images)")
