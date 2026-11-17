@@ -358,6 +358,12 @@ def eigencam(
     # ── 5. Multi-scale EigenCAM ────────────────────────────────
     cam_final = np.zeros((imgsz, imgsz), dtype=np.float32)
 
+    # Bobot lapisan FPN: prioritaskan resolusi tinggi (P3/layer 16) untuk detail spasial jari
+    if len(layers) == 3:
+        layer_weights = {layers[0]: 0.60, layers[1]: 0.30, layers[2]: 0.10}
+    else:
+        layer_weights = {l: 1.0 / len(layers) for l in layers}
+
     for layer_idx in layers:
         feat_np = _extract_activation(model_inner, input_tensor, layer_idx)
         C, H, W = feat_np.shape
@@ -389,7 +395,8 @@ def eigencam(
         cam_layer[:, :bw]  = 0
         cam_layer[:, -bw:] = 0
 
-        cam_final += cv2.resize(cam_layer, (imgsz, imgsz))
+        w_layer = layer_weights.get(layer_idx, 1.0 / len(layers))
+        cam_final += w_layer * cv2.resize(cam_layer, (imgsz, imgsz))
 
     # Normalisasi gabungan semua layer
     c_min, c_max = cam_final.min(), cam_final.max()
@@ -443,35 +450,37 @@ def eigencam(
     # PERBAIKAN #4: raw_cam adalah heatmap mentah untuk bukti ilmiah
     raw_cam = cam_final.copy()
 
-    # ── 8. Post-processing visual ─────────────────────────────
+    # ── 8. Post-processing visual (Penajaman Atensi Jari) ──────
     # (dilakukan pada salinan, raw_cam tidak tersentuh)
     cam_visual = cam_final.copy()
 
-    # Gaussian blur — haluskan noise aktivasi
-    cam_visual = cv2.GaussianBlur(cam_visual, (15, 15), 0)
+    # Gaussian blur halus — mempertahankan ketajaman kontur ruas jari
+    cam_visual = cv2.GaussianBlur(cam_visual, (9, 9), 0)
 
     c_min, c_max = cam_visual.min(), cam_visual.max()
     if c_max - c_min > 1e-8:
         cam_visual = (cam_visual - c_min) / (c_max - c_min)
 
-    # Thresholding persentil 80 — pertahankan hanya puncak aktivasi
+    # Thresholding persentil 85 — fokuskan hanya pada formasi jari aktif
     positive = cam_visual[cam_visual > 0]
     if positive.size > 0:
-        threshold = np.percentile(positive, 80)
+        threshold = np.percentile(positive, 85)
         cam_visual[cam_visual < threshold] = 0
 
     c_min, c_max = cam_visual.min(), cam_visual.max()
     if c_max - c_min > 1e-8:
         cam_visual = (cam_visual - c_min) / (c_max - c_min)
 
-    # Gamma correction γ=0.4 — perjelas kontras tinggi/rendah
-    cam_visual = np.power(cam_visual, 0.4)
+    # Penajaman kontras eksponensial (gamma=1.3) agar telapak pasif diredam dan jari aktif menyala
+    cam_visual = np.power(cam_visual, 1.3)
 
-    # Overlay JET colormap di atas gambar asli
+    # Overlay JET colormap transparan adaptif di atas gambar asli
     heatmap_color = cv2.applyColorMap(np.uint8(255 * cam_visual), cv2.COLORMAP_JET)
     heatmap_rgb   = cv2.cvtColor(heatmap_color, cv2.COLOR_BGR2RGB)
+    
+    alpha = np.clip(cam_visual[:, :, np.newaxis] * 1.4, 0.0, 0.65)
     visual_overlay = np.clip(
-        0.55 * rgb_float + 0.45 * np.float32(heatmap_rgb) / 255.0,
+        (1.0 - alpha) * rgb_float + alpha * (np.float32(heatmap_rgb) / 255.0),
         0.0, 1.0,
     )
 
