@@ -381,9 +381,9 @@ def eigencam(
         if c_max - c_min > 1e-8:
             cam_layer = (cam_layer - c_min) / (c_max - c_min)
 
-        # Masking tepi (10% border) — kurangi artefak padding
-        bh = max(1, int(H * 0.10))
-        bw = max(1, int(W * 0.10))
+        # Masking tepi tipis (3% border) — bersihkan garis artefak padding konvolusi tanpa memotong ruas jari
+        bh = max(1, int(H * 0.03))
+        bw = max(1, int(W * 0.03))
         cam_layer[:bh, :]  = 0
         cam_layer[-bh:, :] = 0
         cam_layer[:, :bw]  = 0
@@ -454,18 +454,18 @@ def eigencam(
     if c_max - c_min > 1e-8:
         cam_visual = (cam_visual - c_min) / (c_max - c_min)
 
-    # Thresholding persentil 80 — pertahankan hanya puncak aktivasi
+    # Thresholding persentil 58 — mempertahankan keseimbangan kedua tangan (segitiga A, T, M, N)
     positive = cam_visual[cam_visual > 0]
     if positive.size > 0:
-        threshold = np.percentile(positive, 80)
+        threshold = np.percentile(positive, 58)
         cam_visual[cam_visual < threshold] = 0
 
     c_min, c_max = cam_visual.min(), cam_visual.max()
     if c_max - c_min > 1e-8:
         cam_visual = (cam_visual - c_min) / (c_max - c_min)
 
-    # Gamma correction γ=0.4 — perjelas kontras tinggi/rendah
-    cam_visual = np.power(cam_visual, 0.4)
+    # Gamma correction γ=0.5 — gradasi kontras alami dan seimbang
+    cam_visual = np.power(cam_visual, 0.5)
 
     # Overlay JET colormap di atas gambar asli
     heatmap_color = cv2.applyColorMap(np.uint8(255 * cam_visual), cv2.COLORMAP_JET)
